@@ -174,7 +174,7 @@ class MVHGC(nn.Module):
             adj_Ss.append(adj_S)
             adj_S_norm = self.process_adj_S(adj_S, dataset)
 
-            h, alpha = self.graphencs[v](z_norm, adj_S_rec_norm)
+            h, alpha = self.graphencs[v](z_norm, adj_S_norm)
             h = F.normalize(h, p=2, dim=-1)
             hs.append(h)
             qg = self.predict_distribution(h, v)
