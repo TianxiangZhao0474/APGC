@@ -172,22 +172,7 @@ class MVHGC(nn.Module):
             )
 
             adj_Ss.append(adj_S)
-            if dataset in ['texas']:
-                adj_S_rec_norm = adj_S
-                adj_Ss_rec_norm.append(adj_S_rec_norm)
-
-            elif dataset in ['chameleon', 'cornell', 'wisconsin']:
-                adj_S_rec_norm = self.normalize_adj(adj_S)
-                adj_Ss_rec_norm.append(adj_S_rec_norm)
-
-            elif dataset in ['acm', 'dblp','imdb', 'acm00', 'acm01', 'acm02', 'acm03', 'acm04', 'acm05']:
-                adj_S_map = self.normalize_and_scale(adj_S)
-
-                adj_S_rec = self.construct_adjacency_matrix(adj_S_map, threshold=0.5)
-                adj_Ss_rec.append(adj_S_rec)
-
-                adj_S_rec_norm = self.normalize_adj(adj_S_rec)
-                adj_Ss_rec_norm.append(adj_S_rec_norm)
+            adj_S_norm = self.process_adj_S(adj_S, dataset)
 
             h, alpha = self.graphencs[v](z_norm, adj_S_rec_norm)
             h = F.normalize(h, p=2, dim=-1)
@@ -239,7 +224,26 @@ class MVHGC(nn.Module):
     def compute_similarity_matrix(self, X):
         S = torch.matmul(X, X.t())
         return S
+        
+    def process_adj_S(self, adj_S, dataset):
+        dataset = dataset.lower()
 
+        if dataset in ['texas']:
+            adj_S_norm = adj_S
+
+        elif dataset in ['chameleon', 'cornell', 'wisconsin']:
+            adj_S_norm = self.normalize_adj(adj_S)
+
+        elif dataset in ['acm', 'dblp', 'imdb', 'acm00', 'acm01', 'acm02', 'acm03', 'acm04', 'acm05']:
+            adj_S_map = self.normalize_and_scale(adj_S)
+            adj_S_rec = self.construct_adjacency_matrix(adj_S_map, threshold=0.5)
+            adj_S_norm = self.normalize_adj(adj_S_rec)
+
+        else:
+            raise ValueError(f"Unsupported dataset: {dataset}")
+
+        return adj_S_norm
+    
     def construct_adjacency_matrix(self, Score, threshold=0.5):
         # prob_matrix = torch.sigmoid(Scores)
         adjacency_matrix = (Score > threshold).float()
